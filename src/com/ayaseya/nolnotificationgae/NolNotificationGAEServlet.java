@@ -1,7 +1,10 @@
 package com.ayaseya.nolnotificationgae;
 
 import java.io.IOException;
-import javax.servlet.http.*;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @SuppressWarnings("serial")
 public class NolNotificationGAEServlet extends HttpServlet {
@@ -9,5 +12,13 @@ public class NolNotificationGAEServlet extends HttpServlet {
 			throws IOException {
 		resp.setContentType("text/plain");
 		resp.getWriter().println("Hello, world");
+		
+		int count=0;
+		for(int i=0;i<2500;i++){
+			count++;
+			String regId="TestDevice_"+count;
+			Datastore.register(regId);
+		}
+		
 	}
 }

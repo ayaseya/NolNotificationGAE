@@ -49,17 +49,16 @@ public final class Datastore {
 	private static final String MULTICAST_TYPE = "Multicast";
 	private static final String MULTICAST_REG_IDS_PROPERTY = "regIds";
 
+	// FetchOptionsでデータストアのクエリ結果を取得する際にどのような方法を使用するか設定できます。
 	// prefetchSizeは初回のアクセスで取得する件数
 	// chunkSizeは2回目以降のアクセスで取得する件数
-	// FetchOptionsでデータストアのクエリ結果を取得する際にどのような方法を使用するか設定できます。
 	private static final FetchOptions DEFAULT_FETCH_OPTIONS = FetchOptions.Builder
 			.withPrefetchSize(MULTICAST_SIZE).chunkSize(MULTICAST_SIZE);
 
-	private static final Logger logger = Logger.getLogger(Datastore.class
-			.getName());
+	private static final Logger logger = Logger.getLogger(Datastore.class.getName());
+	
 	// データストアにアクセスするためデータストアサービスのインスタンスを取得します。
-	private static final DatastoreService datastore = DatastoreServiceFactory
-			.getDatastoreService();
+	private static final DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
 	// Datastoreクラスのコンストラクタ
 	private Datastore() {
@@ -161,11 +160,11 @@ public final class Datastore {
 			// キーを取得したいエンティティーが格納されているカインド名を引数に、Queryクラスのインスタンスを生成しています。
 			Query query = new Query(DEVICE_TYPE);
 			// Iterableインタフェースを実装すると、オブジェクトを「foreach」文の対象にすることができます。
-			// foreach文（フォーイーチぶん）とはプログラミング言語においてリストやハッシュテーブルなどの
+			// foreach文（フォーイーチ文）とはプログラミング言語においてリストやハッシュテーブルなどの
 			// データ構造の各要素に対して与えられた文の実行を繰り返すというループを記述するための文です。
-			Iterable<Entity> entities = datastore.prepare(query).asIterable(
-					DEFAULT_FETCH_OPTIONS);
+			Iterable<Entity> entities = datastore.prepare(query).asIterable(DEFAULT_FETCH_OPTIONS);
 			devices = new ArrayList<String>();
+			
 			for (Entity entity : entities) {
 				String device = (String) entity
 						.getProperty(DEVICE_REG_ID_PROPERTY);
@@ -201,7 +200,7 @@ public final class Datastore {
 			}
 		}
 	}
-	
+
 	// レジストレーションIDから一致するエンティティ（レコード(行)）を返す処理です。？
 	private static Entity findDeviceByRegId(String regId) {
 		logger.info("findDeviceByRegId()");
@@ -210,12 +209,12 @@ public final class Datastore {
 		// Queryクラスからエンティティーを取得するには、QueryのインスタンスからPreparedQueryクラスのインスタンスを生成します。
 		PreparedQuery preparedQuery = datastore.prepare(query);
 		List<Entity> entities = preparedQuery.asList(DEFAULT_FETCH_OPTIONS);// 1000件超えた時はどうなる？
-		
-//		for(Entity empEntity : preparedQuery.asIterable()){// 1000件以上取得する場合には拡張for分で全件取得する？
-//		     System.out.println(
-//		          empEntity.getKind() + " - " + empEntity.getKey() );
-//		}
-		
+
+		//		for(Entity empEntity : preparedQuery.asIterable()){// 1000件以上取得する場合には拡張for分で全件取得する？
+		//		     System.out.println(
+		//		          empEntity.getKind() + " - " + empEntity.getKey() );
+		//		}
+
 		Entity entity = null;
 		if (!entities.isEmpty()) {
 			entity = entities.get(0);
@@ -236,7 +235,7 @@ public final class Datastore {
 	 *            registration ids of the devices.
 	 * @return encoded key for the persistent record.
 	 */
-	
+
 	// http://docs.oracle.com/javase/jp/6/api/java/net/MulticastSocket.html
 	// https://developers.google.com/appengine/docs/java/javadoc/com/google/appengine/api/datastore/KeyFactory#keyToString(com.google.appengine.api.datastore.Key)
 	public static String createMulticast(List<String> devices) {// 引数は全てのレジストレーションIDです。

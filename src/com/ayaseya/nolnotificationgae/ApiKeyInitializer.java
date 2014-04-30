@@ -15,6 +15,8 @@
  */
 package com.ayaseya.nolnotificationgae;
 
+import static com.ayaseya.nolnotificationgae.CommonUtilities.*;
+
 import java.util.logging.Logger;
 
 import javax.servlet.ServletContextEvent;
@@ -45,32 +47,42 @@ public class ApiKeyInitializer implements ServletContextListener {
 	// Webアプリケーションが初期化処理を開始したことを通知します。
 	public void contextInitialized(ServletContextEvent event) {
 		logger.info("ApiKeyInitializerが呼び出されました");
-		DatastoreService datastore = DatastoreServiceFactory
-				.getDatastoreService();
+		
+		// データストアのインスタンスを取得します。
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		// キーを生成します。(ここではSettingsというカインドにMyKeyというname属性を持ったプライマリーキーを設定します)
 		Key key = KeyFactory.createKey(ENTITY_KIND, ENTITY_KEY);
 
 		Entity entity;
 		try {
+			// データストアからキーに該当するエンティティを取得します。
 			entity = datastore.get(key);
 		} catch (EntityNotFoundException e) {
+			// 初回起動時、エンティティが存在しない場合は
+			// エンティティ
 			entity = new Entity(key);
 			// NOTE: it's not possible to change entities in the local server,
 			// so
 			// it will be necessary to hardcode the API key below if you are
 			// running
 			// it locally.
-//			entity.setProperty(ACCESS_KEY_FIELD,
-//					"replace_this_text_by_your_Simple_API_Access_key");
-			entity.setProperty(ACCESS_KEY_FIELD,
-					"AIzaSyDGVth9Itouflh8_47bYX8hsEJlXQCNS2U");
+			// entity.setProperty(ACCESS_KEY_FIELD,
+			// "replace_this_text_by_your_Simple_API_Access_key");
+			
+			// (ここではApiKeyというプロパティ(カラム)にGAEのサーバーAPIを値として保存します)
+			entity.setProperty(ACCESS_KEY_FIELD, SERVER_API_KEY);
+			// データベースにエンティティを保存します。
 			datastore.put(entity);
+			
 			logger.severe("Created fake key. Please go to App Engine admin "
 					+ "console, change its value to your API Key (the entity "
 					+ "type is '" + ENTITY_KIND
 					+ "' and its field to be changed is '" + ACCESS_KEY_FIELD
 					+ "'), then restart the server!");
 		}
+		// データストアに保存されたサーバーAPIを取得します。
 		String accessKey = (String) entity.getProperty(ACCESS_KEY_FIELD);
+		// ServletコンテキストにAPIの情報を付加します。
 		event.getServletContext().setAttribute(ATTRIBUTE_ACCESS_KEY, accessKey);
 	}
 
@@ -78,6 +90,5 @@ public class ApiKeyInitializer implements ServletContextListener {
 	public void contextDestroyed(ServletContextEvent event) {
 		logger.info("ServletContextがシャットダウン処理に入りました");
 	}
-	
 
 }

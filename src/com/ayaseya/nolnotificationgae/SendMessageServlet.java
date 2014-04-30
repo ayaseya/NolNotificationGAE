@@ -190,12 +190,14 @@ public class SendMessageServlet extends BaseServlet {
 			// there were failures, check if any could be retried
 			List<Result> results = multicastResult.getResults();
 			List<String> retriableRegIds = new ArrayList<String>();
+
+			int error_count = 0;
 			for (int i = 0; i < results.size(); i++) {
 				String error = results.get(i).getErrorCodeName();
 				if (error != null) {
+					error_count++;
 					String regId = regIds.get(i);
-					logger.warning("Got error (" + error + ") for regId "
-							+ regId);
+//					logger.warning("Got error (" + error + ") for regId " + regId);
 					if (error.equals(Constants.ERROR_NOT_REGISTERED)) {// NotRegistered
 						// application has been removed from device - unregister
 						// it
@@ -206,6 +208,8 @@ public class SendMessageServlet extends BaseServlet {
 					}
 				}
 			}
+			logger.warning("送信エラー >>" + error_count + "回");
+
 			if (!retriableRegIds.isEmpty()) {// リトライするべきIDが存在した場合の処理です。
 				// update task
 				Datastore.updateMulticast(multicastKey, retriableRegIds);
