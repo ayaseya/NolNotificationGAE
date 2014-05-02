@@ -14,7 +14,7 @@ public class NolNotificationGAEServlet extends HttpServlet {
 		resp.getWriter().println("Hello, world");
 		
 		int count=0;
-		for(int i=0;i<2500;i++){
+		for(int i=0;i<1001;i++){
 			count++;
 			String regId="TestDevice_"+count;
 			Datastore.register(regId);

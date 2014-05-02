@@ -38,7 +38,7 @@ public class HomeServlet extends BaseServlet {
 	/**
 	 * Displays the existing messages and offer the option to send a new one.
 	 */
-	// indexに表示される内容、登録デバイス数についてのサーブレットです。
+	// index.jspに表示される内容、登録デバイス数についてのサーブレットです。
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {

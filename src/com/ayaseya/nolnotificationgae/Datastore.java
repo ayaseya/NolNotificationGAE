@@ -208,7 +208,7 @@ public final class Datastore {
 				FilterOperator.EQUAL, regId);
 		// Queryクラスからエンティティーを取得するには、QueryのインスタンスからPreparedQueryクラスのインスタンスを生成します。
 		PreparedQuery preparedQuery = datastore.prepare(query);
-		List<Entity> entities = preparedQuery.asList(DEFAULT_FETCH_OPTIONS);// 1000件超えた時はどうなる？
+		List<Entity> entities = preparedQuery.asList(DEFAULT_FETCH_OPTIONS);// 1000件超えた時はどうなる？→ダミーデータを2000入れた時は特に問題なかった
 
 		//		for(Entity empEntity : preparedQuery.asIterable()){// 1000件以上取得する場合には拡張for分で全件取得する？
 		//		     System.out.println(

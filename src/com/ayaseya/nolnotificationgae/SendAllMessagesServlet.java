@@ -50,6 +50,12 @@ public class SendAllMessagesServlet extends BaseServlet {
 			throws IOException, ServletException {
 		
 		logger.info("SendAllMessagesServletが呼び出されました");
+		
+		
+		/**
+		 * 登録device数が増加した場合、データストアから読み込む処理の部分も
+		 * タスクキューで実行しなければならない？
+		 */
 		List<String> devices = Datastore.getDevices();// リストに登録済みのレジストレーションIDを取得する。
 		String status;
 		if (devices.isEmpty()) {// レジストレーションIDが一つも登録されていなかった場合の処理

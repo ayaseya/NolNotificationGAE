@@ -16,6 +16,16 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 		<welcome-file>index.html</welcome-file>
 	</welcome-file-list>
 	
+	
+	<servlet>
+		<servlet-name>ScheduleTask</servlet-name>
+		<servlet-class>com.ayaseya.nolnotificationgae.ScheduleTask</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>ScheduleTask</servlet-name>
+		<url-pattern>/schedule</url-pattern>
+	</servlet-mapping>
+	
   <listener>
     <listener-class>
       com.ayaseya.nolnotificationgae.ApiKeyInitializer
