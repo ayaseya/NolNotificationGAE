@@ -121,7 +121,12 @@ public class SendMessageServlet extends BaseServlet {
 	// 1端末にメッセージを送信する場合の処理
 	private void sendSingleMessage(String regId, HttpServletResponse resp) {
 		logger.info("Sending message to device " + regId);
-		Message message = new Message.Builder().build();
+//		Message message = new Message.Builder().build();
+		
+		Message.Builder builder = new Message.Builder();
+		builder.addData("message", "Hello"); // 送信するデータ
+		Message message = builder.build();
+		
 		Result result;
 		try {
 			result = sender.sendNoRetry(message, regId);

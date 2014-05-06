@@ -18,13 +18,25 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 	
 	
 	<servlet>
-		<servlet-name>ScheduleTask</servlet-name>
-		<servlet-class>com.ayaseya.nolnotificationgae.ScheduleTask</servlet-class>
+		<servlet-name>ScheduleJsoupTask</servlet-name>
+		<servlet-class>com.ayaseya.nolnotificationgae.ScheduleJsoupTask</servlet-class>
 	</servlet>
 	<servlet-mapping>
-		<servlet-name>ScheduleTask</servlet-name>
-		<url-pattern>/schedule</url-pattern>
+		<servlet-name>ScheduleJsoupTask</servlet-name>
+		<url-pattern>/cron/schedule</url-pattern>
 	</servlet-mapping>
+	
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>admin</web-resource-name>
+			<url-pattern>/cron/*</url-pattern>
+		</web-resource-collection>
+		<auth-constraint>
+			<role-name>admin</role-name>
+		</auth-constraint>
+	</security-constraint>
+	
+	
 	
   <listener>
     <listener-class>

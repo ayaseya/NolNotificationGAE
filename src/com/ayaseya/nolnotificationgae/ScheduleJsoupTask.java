@@ -23,17 +23,21 @@ import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Transaction;
 
 @SuppressWarnings("serial")
-public class ScheduleTask extends HttpServlet {
+public class ScheduleJsoupTask extends HttpServlet {
 
 	private final Logger logger = Logger.getLogger(getClass().getName());
 
 	private Document document;
+	private Transaction txn;
+
 	private static final String ENTITY_KIND = "Jsoup";
 	private static final String ENTITY_KEY = "Document";
-	private static final String ACCESS_KEY_FIELD = "Pre_HTML_Data";
+	//	private static final String ACCESS_KEY_FIELD = "Html";
 	// スクレイピングするページのURLを指定します。
-	private static final String URL = "https://www.gamecity.ne.jp/nol/news/index.htm";
+	private static final String URL = "https://www.gamecity.ne.jp/nol/news/";
+	private static final String testURL = "http://www5a.biglobe.ne.jp/~yu-ayase/nol/";
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
@@ -45,70 +49,57 @@ public class ScheduleTask extends HttpServlet {
 		// 指定したページをJsoupでスクレイピングする
 		// http://ja.wikipedia.org/wiki/%E3%82%A6%E3%82%A7%E3%83%96%E3%82%B9%E3%82%AF%E3%83%AC%E3%82%A4%E3%83%94%E3%83%B3%E3%82%B0
 		try {
-			document = Jsoup.connect(URL).get();
+			document = Jsoup.connect(testURL).get();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		// 1ページ15行分のtitleとURLをデータストアに保存するため
+		// ArrayListに整形したデータを格納します。
 
 		// spanタグ内のaタグ要素を取得します。
 		// <span><a>hoge</a><span>
 		// 実行結果→<a>hoge</a>
-		Elements titles = document.select("span a");
+		Elements titles = document.select("span a");// 告知の件名です。
+		Elements dates = document.select("tr td font strong");// 告知した日付です。
 
-		// aタグ内の文字列を取得します。
-		// <a>hoge</a>
-		// 実行結果→hoge
-		String currentHTML = titles.text();
-
-		/**
-		 * 
-		 * 変更ありのセクションに移動予定です。
-		 * ============ここから============
-		 * 
-		 **/
-		Elements dates = document.select("tr td font strong");
-
-		ArrayList<String> HTML = new ArrayList<String>();
+		ArrayList<String> TITLE = new ArrayList<String>();
 
 		// 日付をArrayListに格納します。
 		for (Element tmp : dates) {
-			String date = tmp.text();
+			String date = tmp.text();// 取得したHTMLからテキスト要素のみ取り出します。
+			// <strong>タグの要素には日付以外にも<img>タグの要素(改行コードのみ)も取得していたため
+			// 日付のみArrayListに格納する処理にします。
 			if (!date.equals("")) {
-				date = date.replaceAll("\\.", "/");
-				HTML.add(tmp.text() + " ");
+				date = date.replaceAll("\\.", "/");// 2014.01.01→2014/01/01に置き換えます。
+				TITLE.add(date + " ");// ArrayListに格納します。(見やすいように末尾に空白を連結します)
 			}
 		}
-		
+
 		// 日付に件名を追記します。
 		int index = 0;
 		for (Element tmp : titles) {
-			
-			String title =HTML.get(index)+tmp.text();
-//			HTML.remove(index);
-//			HTML.add(index, title);
-			HTML.set(index, title);
-
-			
+			String title = TITLE.get(index) + tmp.text();// 日付に件名を文字列結合します。
+			TITLE.set(index, title); // indexを指定してArrayListの要素を置き換えます。
 			index++;
 		}
 
-		// ArrayListに格納された文字列を一覧で表示します。(テスト用)
-		for (int i = 0; i < HTML.size(); i++) {
-			resp.getWriter().println(HTML.get(i));
-		}
+		// URL(リンク先)もArrayListに格納します。
+		Elements href = document.select("tr td span a");
+		ArrayList<String> LINK = new ArrayList<String>();
+		for (Element tmp : href) {
+			if ((tmp.attr("href").toString()).startsWith("http")) {// 前方一致検索でhttpで始まる文字列か確認する
+				LINK.add(tmp.attr("href").toString()); // httpから始まる文字列(絶対パス)
+			} else {
+				LINK.add(URL + tmp.attr("href").toString()); // httpから始まらない文字列(相対パス)
+			}
 
-		/**
-		 * 
-		 * ============ここまで============
-		 * 
-		 **/
+		}
 
 		// データストアのインスタンスを取得します。
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		// キーを生成します。(ここではJsoupというカインドにDocumentというname属性を持ったプライマリーキーを設定します)
 		Key key = KeyFactory.createKey(ENTITY_KIND, ENTITY_KEY);
-		//		logger.info("key =" + key.toString());
-
 		Entity entity;
 		try {
 			// データストアからキーに該当するエンティティを取得します。
@@ -116,49 +107,59 @@ public class ScheduleTask extends HttpServlet {
 		} catch (EntityNotFoundException e) {
 			// 初回起動時、エンティティが存在しない場合の処理です。
 
-			// エンティティのインスタンスを取得します。
-			entity = new Entity(key);
-
-			// (ここではPre_HTML_Dataというプロパティ(カラム)に
-			// 前回取得したHTMLを値として保存します)
-			entity.setProperty(ACCESS_KEY_FIELD, currentHTML);
-			// データベースにエンティティを保存します。
-			datastore.put(entity);
-
-			resp.getWriter().println("初回起動時のため比較するデータがありません");
-			return;
-
-		}
-		// データストアに保存された前回取得した内容を取得します。
-		String preHTML = (String) entity.getProperty(ACCESS_KEY_FIELD);
-
-		//		resp.getWriter().println("前回のデータ:\n");
-		//		resp.getWriter().println(preHTML);
-		//		resp.getWriter().println("\n");
-
-		//		resp.getWriter().println("最新のデータ:\n");
-		//		resp.getWriter().println(currentHTML);
-		//		resp.getWriter().println("\n");
-
-		if (currentHTML.equals(preHTML)) {
-			//			resp.getWriter().println("変更なし\n");
-
-		} else {
-
-			//			resp.getWriter().println("変更あり\n");
-			// トランザクション処理を開始します。
-			Transaction txn = datastore.beginTransaction();
+			txn = datastore.beginTransaction();
 			try {
+				entity = new Entity(key);
+				entity.setProperty("Title", TITLE);
+				entity.setProperty("Url", LINK);
 
-				entity.setProperty(ACCESS_KEY_FIELD, currentHTML);
 				datastore.put(entity);
+
 				txn.commit();
 			} finally {
 				if (txn.isActive()) {
 					txn.rollback();
 				}
 			}
+			resp.getWriter().println("初回起動時のため比較するデータがありません");
+			return;
+
+		}
+		// データストアに保存された前回取得した内容を取得します。
+		ArrayList<String> preTITLE = (ArrayList<String>) entity.getProperty("Title");
+		resp.getWriter().println("\n前回の内容\n");
+		for (int i = 0; i < preTITLE.size(); i++) {
+			resp.getWriter().println(preTITLE.get(i));
+		}
+
+		// 件名のArrayListを比較して前回から変更があるかないかを判断します。
+		if (!TITLE.equals(preTITLE)) {
+			resp.getWriter().println("変更なし\n");
+
+		} else {
+
+			resp.getWriter().println("変更あり\n");
+
+			// トランザクション処理を開始します。
+
+			txn = datastore.beginTransaction();
+			try {
+				entity = new Entity(key);
+				//				entity.setProperty(ACCESS_KEY_FIELD, currentHTML);
+				entity.setProperty("Title", TITLE);
+				entity.setProperty("Url", LINK);
+
+				datastore.put(entity);
+
+				txn.commit();
+			} finally {
+				if (txn.isActive()) {
+					txn.rollback();
+				}
+			}
+
 		}
 
 	}
+
 }
