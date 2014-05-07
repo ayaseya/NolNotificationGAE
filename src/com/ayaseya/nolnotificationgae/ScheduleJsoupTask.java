@@ -1,9 +1,12 @@
 package com.ayaseya.nolnotificationgae;
 
+import static com.google.appengine.api.taskqueue.TaskOptions.Builder.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -21,6 +24,8 @@ import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Transaction;
+import com.google.appengine.api.taskqueue.Queue;
+import com.google.appengine.api.taskqueue.QueueFactory;
 
 @SuppressWarnings("serial")
 public class ScheduleJsoupTask extends HttpServlet {
@@ -42,7 +47,7 @@ public class ScheduleJsoupTask extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 
-		logger.info("ScheduleTaskが呼び出されました");
+		logger.info("ScheduleJsoupTaskが呼び出されました");
 
 		resp.setContentType("text/plain;charset=UTF-8");
 
@@ -53,7 +58,7 @@ public class ScheduleJsoupTask extends HttpServlet {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		// 1ページ15行分のtitleとURLをデータストアに保存するため
 		// ArrayListに整形したデータを格納します。
 
@@ -133,19 +138,27 @@ public class ScheduleJsoupTask extends HttpServlet {
 		}
 
 		// 件名のArrayListを比較して前回から変更があるかないかを判断します。
-		if (!TITLE.equals(preTITLE)) {
-			resp.getWriter().println("変更なし\n");
+		if (TITLE.equals(preTITLE)) {
+			resp.getWriter().println("\n変更なし\n");
 
 		} else {
+			resp.getWriter().println("\n変更あり\n");
 
-			resp.getWriter().println("変更あり\n");
+			//ServletContextインタフェースのオブジェクトを取得します。
+			ServletContext sc = getServletContext();
+			//データをapplicationスコープで保存します。
+			sc.setAttribute("TITLE", TITLE);
+			sc.setAttribute("preTITLE", preTITLE);
+			sc.setAttribute("LINK", LINK);
+
+			Queue queue = QueueFactory.getQueue("send");
+			queue.add(withUrl("/sendAll"));
 
 			// トランザクション処理を開始します。
 
 			txn = datastore.beginTransaction();
 			try {
 				entity = new Entity(key);
-				//				entity.setProperty(ACCESS_KEY_FIELD, currentHTML);
 				entity.setProperty("Title", TITLE);
 				entity.setProperty("Url", LINK);
 

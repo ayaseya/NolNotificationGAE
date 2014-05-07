@@ -42,6 +42,7 @@ public class SendAllMessagesServlet extends BaseServlet {
 
 	private final Logger logger = Logger.getLogger(getClass().getName());
 
+	
 	/**
 	 * Processes the request to add a new message.
 	 */
@@ -50,7 +51,6 @@ public class SendAllMessagesServlet extends BaseServlet {
 			throws IOException, ServletException {
 		
 		logger.info("SendAllMessagesServletが呼び出されました");
-		
 		
 		/**
 		 * 登録device数が増加した場合、データストアから読み込む処理の部分も
@@ -72,8 +72,8 @@ public class SendAllMessagesServlet extends BaseServlet {
 				// レジストレーションIDを取得します。
 				String device = devices.get(0);
 				// タスクキューにパラメーターを設定し実行します。
-				queue.add(withUrl("/send").param(
-						SendMessageServlet.PARAMETER_DEVICE, device));
+				queue.add(withUrl("/send")
+						.param(SendMessageServlet.PARAMETER_DEVICE, device));
 				
 				status = "Single message queued for registration id " + device;
 				
@@ -101,8 +101,7 @@ public class SendAllMessagesServlet extends BaseServlet {
 						// タスクを呼び出すインスタンスを生成します。パラメータ等は自由に設定できます。
 						TaskOptions taskOptions = TaskOptions.Builder
 								.withUrl("/send")
-								.param(SendMessageServlet.PARAMETER_MULTICAST,
-										multicastKey).method(Method.POST);
+								.param(SendMessageServlet.PARAMETER_MULTICAST,multicastKey).method(Method.POST);
 						queue.add(taskOptions);// タスクキューに処理が登録され、非同期に実行されます。
 						partialDevices.clear();// リストの全要素を削除します。
 						tasks++;

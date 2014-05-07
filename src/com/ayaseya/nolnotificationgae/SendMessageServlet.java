@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.logging.Level;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -48,6 +49,10 @@ public class SendMessageServlet extends BaseServlet {
 
 	static final String PARAMETER_DEVICE = "device";
 	static final String PARAMETER_MULTICAST = "multicastKey";
+	ArrayList<String> TITLE;
+	ArrayList<String> preTITLE;
+	ArrayList<String> LINK;
+	ArrayList<Integer> updateIndex;
 
 	private Sender sender;
 
@@ -83,6 +88,7 @@ public class SendMessageServlet extends BaseServlet {
 	/**
 	 * Processes the request to add a new message.
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
@@ -103,6 +109,27 @@ public class SendMessageServlet extends BaseServlet {
 		}
 		//
 		String regId = req.getParameter(PARAMETER_DEVICE);
+
+		//ServletContextインタフェースのオブジェクトを取得
+		ServletContext sc = getServletContext();
+		//データをapplicationスコープで保存
+		sc.getAttribute("LIST");
+
+		TITLE = (ArrayList<String>) sc.getAttribute("TITLE");
+		preTITLE = (ArrayList<String>) sc.getAttribute("preTITLE");
+		LINK = (ArrayList<String>) sc.getAttribute("LINK");
+
+		updateIndex = new ArrayList<Integer>();
+
+		// 前回のデータと比較して新しい告知を探します。
+		for (int i = 0; i < TITLE.size(); i++) {
+			if (preTITLE.indexOf(TITLE.get(i)) == -1) {
+				updateIndex.add(i);
+				logger.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" + (i+1) + "件目: " + TITLE.get(i) + "\n");
+
+			}
+		}
+
 		if (regId != null) {
 			sendSingleMessage(regId, resp);// 1端末だった場合、メッセージを送信します。
 			return;
@@ -121,12 +148,18 @@ public class SendMessageServlet extends BaseServlet {
 	// 1端末にメッセージを送信する場合の処理
 	private void sendSingleMessage(String regId, HttpServletResponse resp) {
 		logger.info("Sending message to device " + regId);
-//		Message message = new Message.Builder().build();
-		
+		//		Message message = new Message.Builder().build();
+
 		Message.Builder builder = new Message.Builder();
-		builder.addData("message", "Hello"); // 送信するデータ
+		builder.addData("INDEX", String.valueOf(updateIndex.size())); // 更新された件数です。
+		for (int i = 0; i < updateIndex.size(); i++) {
+
+			builder.addData("TITLE"+(i+1), TITLE.get(updateIndex.get(i))); // 送信する件名データです。
+			builder.addData("URL"+(i+1), LINK.get(updateIndex.get(i))); // 送信するURLデータです。
+
+		}
 		Message message = builder.build();
-		
+
 		Result result;
 		try {
 			result = sender.sendNoRetry(message, regId);
@@ -169,7 +202,20 @@ public class SendMessageServlet extends BaseServlet {
 			HttpServletResponse resp) {
 		// Recover registration ids from datastore
 		List<String> regIds = Datastore.getMulticast(multicastKey);// データストアからレジストレーションIDを取得します。？
-		Message message = new Message.Builder().build();
+
+		//		Message message = new Message.Builder().build();
+
+		Message.Builder builder = new Message.Builder();
+		builder.addData("INDEX", String.valueOf(updateIndex.size())); // 更新された件数です。
+		for (int i = 0; i < updateIndex.size(); i++) {
+
+			builder.addData("TITLE"+(i+1), TITLE.get(updateIndex.get(i))); // 送信する件名データです。
+			builder.addData("URL"+(i+1), LINK.get(updateIndex.get(i))); // 送信するURLデータです。
+
+		}
+
+		Message message = builder.build();
+
 		MulticastResult multicastResult;
 		try {
 			multicastResult = sender.sendNoRetry(message, regIds);
@@ -202,7 +248,7 @@ public class SendMessageServlet extends BaseServlet {
 				if (error != null) {
 					error_count++;
 					String regId = regIds.get(i);
-//					logger.warning("Got error (" + error + ") for regId " + regId);
+					//					logger.warning("Got error (" + error + ") for regId " + regId);
 					if (error.equals(Constants.ERROR_NOT_REGISTERED)) {// NotRegistered
 						// application has been removed from device - unregister
 						// it
