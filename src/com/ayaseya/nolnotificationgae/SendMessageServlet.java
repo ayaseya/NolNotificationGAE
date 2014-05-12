@@ -52,6 +52,8 @@ public class SendMessageServlet extends BaseServlet {
 	ArrayList<String> TITLE;
 	ArrayList<String> preTITLE;
 	ArrayList<String> LINK;
+	ArrayList<String> ICON;
+	
 	ArrayList<Integer> updateIndex;
 
 	private Sender sender;
@@ -118,10 +120,11 @@ public class SendMessageServlet extends BaseServlet {
 		TITLE = (ArrayList<String>) sc.getAttribute("TITLE");
 		preTITLE = (ArrayList<String>) sc.getAttribute("preTITLE");
 		LINK = (ArrayList<String>) sc.getAttribute("LINK");
+		ICON = (ArrayList<String>) sc.getAttribute("ICON");
 
 		updateIndex = new ArrayList<Integer>();
 
-		// 前回のデータと比較して新しい告知を探します。
+		// 前回のデータと比較して新しい告知が何件存在するか検索します。
 		for (int i = 0; i < TITLE.size(); i++) {
 			if (preTITLE.indexOf(TITLE.get(i)) == -1) {
 				updateIndex.add(i);
@@ -156,6 +159,7 @@ public class SendMessageServlet extends BaseServlet {
 
 			builder.addData("TITLE"+(i+1), TITLE.get(updateIndex.get(i))); // 送信する件名データです。
 			builder.addData("URL"+(i+1), LINK.get(updateIndex.get(i))); // 送信するURLデータです。
+			builder.addData("ICON"+(i+1), ICON.get(updateIndex.get(i))); // 送信するICONデータです。
 
 		}
 		Message message = builder.build();
@@ -211,7 +215,7 @@ public class SendMessageServlet extends BaseServlet {
 
 			builder.addData("TITLE"+(i+1), TITLE.get(updateIndex.get(i))); // 送信する件名データです。
 			builder.addData("URL"+(i+1), LINK.get(updateIndex.get(i))); // 送信するURLデータです。
-
+			builder.addData("ICON"+(i+1), ICON.get(updateIndex.get(i))); // 送信するICONデータです。
 		}
 
 		Message message = builder.build();

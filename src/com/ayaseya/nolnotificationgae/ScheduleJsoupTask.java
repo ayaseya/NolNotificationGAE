@@ -67,6 +67,20 @@ public class ScheduleJsoupTask extends HttpServlet {
 		// 実行結果→<a>hoge</a>
 		Elements titles = document.select("span a");// 告知の件名です。
 		Elements dates = document.select("tr td font strong");// 告知した日付です。
+		Elements icon = document.select("tr td font img");// アイコン画像です。
+
+
+		//アイコン情報を格納します。
+		ArrayList<String> ICON = new ArrayList<String>();
+		for (Element tmp : icon) {
+
+			if (!tmp.attr("src").toString().endsWith("line.gif")) {
+				String str = tmp.attr("src").toString();
+				str = str.replaceAll("/nol/index2_image/", "");
+				str = str.replaceAll(".gif", "");
+				ICON.add(str);
+			}
+		}
 
 		ArrayList<String> TITLE = new ArrayList<String>();
 
@@ -117,6 +131,7 @@ public class ScheduleJsoupTask extends HttpServlet {
 				entity = new Entity(key);
 				entity.setProperty("Title", TITLE);
 				entity.setProperty("Url", LINK);
+				entity.setProperty("Icon", ICON);
 
 				datastore.put(entity);
 
@@ -150,6 +165,7 @@ public class ScheduleJsoupTask extends HttpServlet {
 			sc.setAttribute("TITLE", TITLE);
 			sc.setAttribute("preTITLE", preTITLE);
 			sc.setAttribute("LINK", LINK);
+			sc.setAttribute("ICON", ICON);
 
 			Queue queue = QueueFactory.getQueue("send");
 			queue.add(withUrl("/sendAll"));
@@ -161,7 +177,8 @@ public class ScheduleJsoupTask extends HttpServlet {
 				entity = new Entity(key);
 				entity.setProperty("Title", TITLE);
 				entity.setProperty("Url", LINK);
-
+				entity.setProperty("Icon", ICON);
+				
 				datastore.put(entity);
 
 				txn.commit();
