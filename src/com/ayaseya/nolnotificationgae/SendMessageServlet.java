@@ -252,7 +252,7 @@ public class SendMessageServlet extends BaseServlet {
 				if (error != null) {
 					error_count++;
 					String regId = regIds.get(i);
-					//					logger.warning("Got error (" + error + ") for regId " + regId);
+					logger.warning("Got error (" + error + ") for regId " + regId);
 					if (error.equals(Constants.ERROR_NOT_REGISTERED)) {// NotRegistered
 						// application has been removed from device - unregister
 						// it
