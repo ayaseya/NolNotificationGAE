@@ -20,7 +20,7 @@ public final class CommonUtilities {
      * https://console.developers.google.com/
      * サーバー用APIキー＝SERVER_API_KEY
      */
-    static final String SERVER_API_KEY = "AIzaSyDGVth9Itouflh8_47bYX8hsEJlXQCNS2U";
+    static final String SERVER_API_KEY = "AIzaSyDJ3vpzZpz9wq_mSL_ALTr6N9SyglAJz9M";
 
 
 }

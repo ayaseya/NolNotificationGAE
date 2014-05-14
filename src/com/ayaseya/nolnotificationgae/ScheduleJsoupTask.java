@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -40,7 +41,6 @@ public class ScheduleJsoupTask extends HttpServlet {
 	//	private static final String ACCESS_KEY_FIELD = "Html";
 	// スクレイピングするページのURLを指定します。
 	private static final String URL = "https://www.gamecity.ne.jp/nol/news/";
-	private static final String testURL = "http://www5a.biglobe.ne.jp/~yu-ayase/nol/";
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -54,7 +54,11 @@ public class ScheduleJsoupTask extends HttpServlet {
 		// 指定したページをJsoupでスクレイピングする
 		// http://ja.wikipedia.org/wiki/%E3%82%A6%E3%82%A7%E3%83%96%E3%82%B9%E3%82%AF%E3%83%AC%E3%82%A4%E3%83%94%E3%83%B3%E3%82%B0
 		try {
-			document = Jsoup.connect(testURL).get();
+			document = Jsoup.connect(URL).get();
+		} catch (HttpStatusException e) {
+			resp.getWriter().println("メンテナンス中のため処理を中断します");
+			resp.getWriter().println("\n"+e);
+			return;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -68,7 +72,6 @@ public class ScheduleJsoupTask extends HttpServlet {
 		Elements titles = document.select("span a");// 告知の件名です。
 		Elements dates = document.select("tr td font strong");// 告知した日付です。
 		Elements icon = document.select("tr td font img");// アイコン画像です。
-
 
 		//アイコン情報を格納します。
 		ArrayList<String> ICON = new ArrayList<String>();
@@ -178,7 +181,7 @@ public class ScheduleJsoupTask extends HttpServlet {
 				entity.setProperty("Title", TITLE);
 				entity.setProperty("Url", LINK);
 				entity.setProperty("Icon", ICON);
-				
+
 				datastore.put(entity);
 
 				txn.commit();
